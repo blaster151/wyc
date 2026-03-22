@@ -25,18 +25,18 @@ These constraints come directly from the PRD and must not be violated:
 | Styling | Tailwind CSS v4 | Utility-first, great for responsive mobile design, minimal bundle |
 | Language | TypeScript | Type-safety for content schemas and component props |
 | Hosting | Vercel (static) | Free tier, fast CDN, easy custom domain, deploys on push |
-| Content | JSON files in a **separate public GitHub repo**, fetched at runtime | No redeploy needed to update content; browser-editable; free; no API keys |
-| Audio | External URL (linked from content JSON) | No self-hosting setup; creator hosts audio anywhere and drops the URL into the content file |
+| Content | JSON files in a server-accessible `/content/` folder, fetched at runtime via relative path | No redeploy needed; editable in-place on the server; no API keys; no build step |
+| Audio | External URL (linked from content JSON) | Creator hosts audio anywhere and drops the URL into the content file |
 | Analytics | None (V0) | Vercel dashboard for basic page views only |
 
-### Why file-based JSON in a separate content repo?
-- **No redeploy to update content** — the main app repo is never touched when affirmations change
-- No API key management or quota concerns (public repo, raw URLs are open)
-- Editable via GitHub web UI by a non-technical creator (or any text editor with a browser)
-- Content and code have independent lifecycles — content is closer to a DB than source code
+### Why file-based JSON in a content folder?
+- **No redeploy to update content** — edit files in-place on the server, changes are live immediately
+- Content is not version-controlled — treated like a database, not source code
+- No API key management or quota concerns
+- No build step, no CMS, no backend — just files on a server
 - Simple migration path to a CMS later
 
-**Recommended V0 setup:** Create a second public GitHub repo (e.g. `wyc-content`) containing `affirmations.json`, `welcomes.json`, and `config.json`. The main app fetches from stable `raw.githubusercontent.com` URLs at runtime. A GitHub Gist is a simpler alternative if a full repo feels like overhead.
+**V0 setup:** A `/content/` folder on the web server, sibling to the app's static files, containing `affirmations.json`, `welcomes.json`, and `config.json`. The app fetches them via relative paths (e.g. `/content/affirmations.json`). For local development, the same files live in `public/content/` (Next.js serves `public/` as the site root).
 
 ---
 
@@ -82,18 +82,14 @@ wyc/
 │   └── types.ts                # Shared TypeScript interfaces (from PRD schema)
 │
 ├── public/
-│   ├── content/                # LOCAL DEV ONLY — mirrors the external content repo
-│   │   ├── affirmations.json   #   (not deployed; overridden by NEXT_PUBLIC_CONTENT_BASE_URL in prod)
-│   │   ├── welcomes.json
-│   │   └── config.json
-│   ├── images/                 # Optional static images (app chrome, fallbacks)
+│   ├── content/                # Content JSON files (dev + production)
+│   │   ├── affirmations.json   #   Editable in-place on the server
+│   │   ├── welcomes.json       #   Fetched via relative path at runtime
+│   │   └── config.json         #   Not baked into the JS bundle
+│   ├── audio/                  # Optional self-hosted audio files
+│   ├── images/                 # Optional affirmation images
 │   ├── icons/                  # PWA icons (192x192, 512x512)
 │   └── manifest.json           # Web App Manifest
-│
-│  [external] wyc-content repo  # Separate public GitHub repo — actual live content
-│   ├── affirmations.json       #   raw.githubusercontent.com/.../affirmations.json
-│   ├── welcomes.json
-│   └── config.json             #   audio files referenced by URL in JSON (hosted anywhere)
 │
 └── docs/
     ├── PRD.md
@@ -107,20 +103,18 @@ wyc/
 
 ### Content Loading
 ```
-Runtime (client-side, on first render)
-  └─ NEXT_PUBLIC_CONTENT_BASE_URL env var resolves to external content repo base URL
-  └─ Browser fetches {base}/affirmations.json
-  └─ Browser fetches {base}/welcomes.json
-  └─ Browser fetches {base}/config.json
+Runtime (client-side, on page load)
+  └─ Browser fetches /content/affirmations.json   (relative path)
+  └─ Browser fetches /content/welcomes.json
+  └─ Browser fetches /content/config.json
         └─ lib/content.ts parses and validates
-        └─ Falls back to /content/*.json (local dev fallback)
 ```
 
-Content lives in a **separate public GitHub repo**. The app fetches from `raw.githubusercontent.com` URLs at runtime on the client. Files are tiny and browser-cached after the first load.
+Content JSON files live in a `/content/` folder on the web server, fetched by the browser at runtime via relative paths. The files are not compiled into the JS bundle — they're plain static assets the creator can edit in-place.
 
-Setting `NEXT_PUBLIC_CONTENT_BASE_URL` in Vercel environment variables is the only config needed. Local development falls back to `public/content/` (a local mirror of the content repo, not committed to production).
+In local development, `public/content/` serves the same role (Next.js maps `public/` to the site root). Seed data is committed to the repo so `npm run dev` works out of the box.
 
-> **Audio files** are referenced by URL inside the JSON (e.g. `"audioUrl": "https://..."`) — the app never needs to host the audio itself. The creator uploads audio wherever is convenient and pastes the URL into the content file.
+> **Audio files** are referenced by URL inside the JSON (e.g. `"audioUrl": "https://..."` or a relative path like `"/audio/welcome.mp3"`). The creator uploads audio wherever is convenient and puts the URL into the content file.
 
 ### First Visit Detection
 ```
@@ -268,12 +262,10 @@ git push → Vercel auto-deploy
 ```
 
 **Content update workflow (zero redeploy):**
-1. Go to the `wyc-content` GitHub repo
-2. Edit `affirmations.json`, `welcomes.json`, or `config.json` directly in the browser
-3. Commit directly to `main`
-4. The main app fetches the updated file on the next user session — no Vercel redeploy needed
+1. Edit `affirmations.json`, `welcomes.json`, or `config.json` directly on the server
+2. Changes are live on the next user session — no build, no deploy, no git push
 
-The main `wyc` repo is only touched when app code or design changes. Content and code are fully decoupled.
+Content and code have independent lifecycles. The app repo is only touched when code or design changes. Content is edited in-place like a database.
 
 ---
 
@@ -281,7 +273,7 @@ The main `wyc` repo is only touched when app code or design changes. Content and
 
 | Topic | V0 Decision | Future Path |
 |-------|-------------|-------------|
-| Content source | JSON in separate public GitHub repo, fetched at runtime | Headless CMS (Contentful, Sanity) or Google Sheets API |
+| Content source | JSON files on the server, editable in-place | Headless CMS (Contentful, Sanity) or Google Sheets API |
 | Analytics | None | Plausible / Fathom (privacy-first) |
 | Audio hosting | `public/audio/` or external URL | Cloudinary or S3 with signed URLs |
 | Cross-device first-visit | localStorage only | Fingerprint + lightweight backend |

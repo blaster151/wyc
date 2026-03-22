@@ -27,19 +27,18 @@ Definition of Done:
 
 ---
 
-### Story 1.1 — Create the content repository
-**As a** creator, **I want** a separate, dedicated place to manage content **so that** I can update affirmations and welcome messages without touching the codebase.
+### Story 1.1 — Seed content files
+**As a** creator, **I want** a set of well-structured content files with sample data **so that** the app works out of the box in dev and I know exactly what to edit in production.
 
 **Acceptance Criteria:**
-- [ ] A new **public** GitHub repo (e.g. `wyc-content`) is created
-- [ ] Repo contains `affirmations.json`, `welcomes.json`, and `config.json` at root
+- [ ] `public/content/affirmations.json`, `welcomes.json`, and `config.json` exist
 - [ ] All files match the schemas defined in ARCH.md §7
 - [ ] ≥ 3 sample affirmations with content that reflects the intended tone
 - [ ] 1 active welcome message with a date range covering today + a fallback entry
 - [ ] `config.json` has placeholder `donationUrl`, real `timerDurationMs`, and `supportNote`
-- [ ] Raw file URLs (`raw.githubusercontent.com/...`) are confirmed accessible in a browser
+- [ ] `npm run dev` serves the files correctly at `/content/*.json`
 
-**Notes:** Seed data should reflect the intended tone (calm, grounding). See PRD §2 persona.
+**Notes:** Seed data should reflect the intended tone (calm, grounding). See PRD §2 persona. These files are committed for dev convenience; in production, the `/content/` folder is managed in-place on the server.
 
 ---
 
@@ -48,21 +47,12 @@ Definition of Done:
 
 **Acceptance Criteria:**
 - [ ] `lib/types.ts` exports `Affirmation`, `WelcomeMessage`, `SiteConfig` interfaces
-- [ ] `lib/content.ts` reads `NEXT_PUBLIC_CONTENT_BASE_URL` env var for the content base URL
-- [ ] Falls back to `/content/` (local `public/` folder) when env var is not set (dev convenience)
-- [ ] `lib/content.ts` exports `fetchAffirmations(): Promise<Affirmation[]>`
-- [ ] `lib/content.ts` exports `fetchWelcome(date: Date): Promise<WelcomeMessage>`
-- [ ] `lib/content.ts` exports `fetchConfig(): Promise<SiteConfig>`
-- [ ] `getActiveWelcome` returns fallback if no date-range match
+- [ ] `lib/content.ts` fetches JSON from relative paths (`/content/affirmations.json`, etc.)
+- [ ] Exports `fetchAffirmations(): Promise<Affirmation[]>`
+- [ ] Exports `fetchWelcome(date: Date): Promise<WelcomeMessage>`
+- [ ] Exports `fetchConfig(): Promise<SiteConfig>`
+- [ ] `fetchWelcome` returns fallback if no date-range match
 - [ ] All functions handle fetch failure gracefully (return fallback / empty array, never crash)
-
-### Story 1.3a — Local content dev mirror
-**As a** developer, **I want** local JSON files that mirror the content repo **so that** the app works in dev without needing the external URL.
-
-**Acceptance Criteria:**
-- [ ] `public/content/affirmations.json`, `welcomes.json`, `config.json` exist in the main repo
-- [ ] These files are listed in `.gitignore` (they are dev-only; the content repo is the source of truth)
-- [ ] A comment in README explains: "copy content files from `wyc-content` repo into `public/content/` for local dev"
 
 ---
 

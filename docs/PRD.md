@@ -25,8 +25,8 @@ WYC fills that gap in V0 as a minimal, beautiful, mobile-first web experience.
 
 ### Out of Scope (V0)
 - Power users who want personalization, history, or saved favorites
-- Users who primarily use desktop
-- Users who require accessibility accommodations beyond mobile-first responsive layout *(deferred to V1)*
+- Desktop-optimized layouts (the app is mobile-first but won't break on larger screens)
+- Accessibility accommodations beyond mobile-first responsive layout and WCAG AA contrast *(expanded in V1)*
 
 ---
 
@@ -39,6 +39,8 @@ WYC fills that gap in V0 as a minimal, beautiful, mobile-first web experience.
 | Support conversion | Click-through on donation link | > 5% of sessions |
 | Return visits | Repeat sessions from same device | Trackable (no target yet) |
 | Content freshness | Creator can update content without code deploy | Must-have |
+
+*Note: V0 has no built-in analytics. These metrics are aspirational targets — measurable once lightweight privacy-first analytics (e.g. Plausible) are added in a future version. For V0 launch, success is qualitative: does the experience feel right?*
 
 ---
 
@@ -94,38 +96,38 @@ Support Screen (reachable from nav + end of flow)
 ## 5. Functional Requirements
 
 ### FR-01 · Welcome Screen
-- **FR-01a** The app SHALL display a welcome screen on the user's first visit to the domain (per device/browser).
-- **FR-01b** The welcome screen SHALL contain an optional audio clip with play/skip controls.
-- **FR-01c** The welcome screen SHALL provide a clear CTA to proceed into the daily welcome.
-- **FR-01d** On subsequent visits, the welcome screen SHALL be skipped; user lands on the Daily Welcome.
+- **FR-01a** Show a welcome screen on the user's first visit to the domain (per device/browser).
+- **FR-01b** The welcome screen includes an optional audio clip with play/skip controls.
+- **FR-01c** The welcome screen has a clear CTA to proceed into the daily welcome.
+- **FR-01d** On subsequent visits, skip the welcome screen — user lands on the Daily Welcome.
 
 ### FR-02 · Daily Welcome
-- **FR-02a** The app SHALL display a single active welcome message determined by the current date against a configured `effectiveDate` range.
-- **FR-02b** The welcome message SHALL support text and an optional audio file.
-- **FR-02c** If no active welcome message exists for the current date, a default fallback message SHALL be shown.
+- **FR-02a** Display a single active welcome message determined by the current date against a configured `effectiveDate` range.
+- **FR-02b** The welcome message supports text and an optional audio file.
+- **FR-02c** If no active welcome message exists for the current date, show a default fallback message.
 
 ### FR-03 · Affirmation Viewer
-- **FR-03a** The viewer SHALL display one affirmation at a time in a full-screen card layout.
-- **FR-03b** Each card SHALL show message text, and optionally an image and attribution string.
-- **FR-03c** A visual timer (progress bar or countdown) SHALL run for a configurable duration (default 7 seconds) before the advance action is enabled.
-- **FR-03d** After the timer elapses, the user SHALL be able to advance to the next card via tap or button press.
-- **FR-03e** Messages SHALL be served in a shuffled, non-repeating sequence drawn from the active content pool.
-- **FR-03f** Only affirmations with `active: true` SHALL be included in the pool.
-- **FR-03g** When all messages have been shown, the user SHALL be transitioned to the Support/Completion screen.
+- **FR-03a** Display one affirmation at a time in a full-screen card layout.
+- **FR-03b** Each card shows message text, and optionally an image and attribution string.
+- **FR-03c** A visual timer (progress bar or countdown) runs for a configurable duration (default 7 seconds) as a presence nudge. The advance button is always available — the timer encourages pausing, it doesn't gate progression.
+- **FR-03d** User advances to the next card via tap or button press.
+- **FR-03e** Messages appear in a shuffled, non-repeating sequence drawn from the active content pool.
+- **FR-03f** Only affirmations with `active: true` are included in the pool.
+- **FR-03g** After the last message, transition the user to the Support/Completion screen.
 
 ### FR-04 · Support Screen
-- **FR-04a** A support/about screen SHALL be reachable from persistent navigation AND at the end of a completed affirmation sequence.
-- **FR-04b** The screen SHALL show a short creator note (plain text, configurable in content).
-- **FR-04c** The screen SHALL link to an external donation platform (URL configurable, not hardcoded).
+- **FR-04a** The support/about screen is reachable from persistent navigation AND at the end of a completed affirmation sequence.
+- **FR-04b** The screen shows a short creator note (plain text, configurable in content).
+- **FR-04c** The screen links to an external donation platform (URL configurable, not hardcoded).
 
 ### FR-05 · Content Management
-- **FR-05a** Content (affirmations, welcome messages, support text, donation URL) SHALL be manageable without code changes or redeployment.
-- **FR-05b** V0 SHALL support file-based content (JSON/YAML in repo or fetched from a hosted source).
-- **FR-05c** The content schema SHALL be versioned to support future migration.
+- **FR-05a** Content (affirmations, welcome messages, support text, donation URL) is manageable without code changes or redeployment.
+- **FR-05b** V0 uses file-based content: JSON files in a server-accessible `/content/` folder, editable in-place without a build step.
+- **FR-05c** The content schema is versioned to support future migration.
 
 ### FR-06 · PWA / Home Screen
-- **FR-06a** The app SHALL include a web app manifest enabling "Add to Home Screen" prompts on iOS/Android.
-- **FR-06b** A basic app icon and splash color SHALL be configured.
+- **FR-06a** Include a web app manifest enabling "Add to Home Screen" prompts on iOS/Android.
+- **FR-06b** Configure a basic app icon and splash color.
 
 ---
 
@@ -197,11 +199,13 @@ interface SiteConfig {
 
 | # | Question | Owner | Status |
 |---|----------|-------|--------|
-| Q1 | Will content be file-based (in repo) or fetched from Google Sheets / external API? | Creator | Open |
-| Q2 | Is the timer a hard block or a soft suggestion (can user skip immediately)? | Creator | Open — recommend soft (timer as presence nudge, not gate) |
-| Q3 | What is the target domain / Vercel project name? | Creator | Open |
-| Q4 | Are audio files self-hosted or externally hosted (e.g. S3, Cloudinary)? | Creator | Open |
-| Q5 | Should "first visit" reset on browser data clear, or is that acceptable? | Creator | Acceptable for V0 |
+| Q1 | What is the target domain? | Creator | Open |
+| Q2 | Should "first visit" reset on browser data clear, or is that acceptable? | Creator | Acceptable for V0 |
+
+**Resolved:**
+- ~~Content backend~~ → File-based JSON in a server-accessible `/content/` folder, editable in-place
+- ~~Timer hard vs soft~~ → Soft. Timer is a presence nudge; advance button is always available
+- ~~Audio hosting~~ → External URLs referenced in content JSON. Creator hosts audio anywhere and pastes the URL
 
 ---
 
