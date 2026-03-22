@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "welcomes": [
+    {
+      "id": "wlc-001",
+      "text": "Take a breath. You're here.",
+      "audioUrl": null,
+      "effectiveDateStart": "2026-01-01",
+      "effectiveDateEnd": "2026-12-31"
+    }
+  ],
+  "fallback": {
+    "text": "Welcome. Take a moment for yourself."
+  }
+}

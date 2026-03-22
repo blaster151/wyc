@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "affirmations": [
+    {
+      "id": "aff-001",
+      "text": "You are exactly where you need to be.",
+      "attribution": null,
+      "imageUrl": null,
+      "active": true
+    },
+    {
+      "id": "aff-002",
+      "text": "This moment is yours. You don't have to rush through it.",
+      "attribution": null,
+      "imageUrl": null,
+      "active": true
+    },
+    {
+      "id": "aff-003",
+      "text": "You are allowed to take up space, to rest, and to begin again.",
+      "attribution": null,
+      "imageUrl": null,
+      "active": true
+    },
+    {
+      "id": "aff-004",
+      "text": "Breathe in. You are doing enough. You are enough.",
+      "attribution": null,
+      "imageUrl": null,
+      "active": true
+    },
+    {
+      "id": "aff-005",
+      "text": "What you carry today does not define where you are going.",
+      "attribution": null,
+      "imageUrl": null,
+      "active": true
+    }
+  ]
+}
