@@ -25,16 +25,18 @@ These constraints come directly from the PRD and must not be violated:
 | Styling | Tailwind CSS v4 | Utility-first, great for responsive mobile design, minimal bundle |
 | Language | TypeScript | Type-safety for content schemas and component props |
 | Hosting | Vercel (static) | Free tier, fast CDN, easy custom domain, deploys on push |
-| Content | JSON files in `public/content/` | No server required; browser can fetch; creator edits files |
-| Audio | Self-hosted in `public/audio/` or external URL | Simple, no dependencies |
+| Content | JSON files in a **separate public GitHub repo**, fetched at runtime | No redeploy needed to update content; browser-editable; free; no API keys |
+| Audio | External URL (linked from content JSON) | No self-hosting setup; creator hosts audio anywhere and drops the URL into the content file |
 | Analytics | None (V0) | Vercel dashboard for basic page views only |
 
-### Why file-based JSON over Google Sheets?
-- No API key management or quota concerns
-- Works offline after first load (can be bundled or cached)
-- Version-controlled with the project
-- Editable via GitHub web UI by a non-technical creator
+### Why file-based JSON in a separate content repo?
+- **No redeploy to update content** — the main app repo is never touched when affirmations change
+- No API key management or quota concerns (public repo, raw URLs are open)
+- Editable via GitHub web UI by a non-technical creator (or any text editor with a browser)
+- Content and code have independent lifecycles — content is closer to a DB than source code
 - Simple migration path to a CMS later
+
+**Recommended V0 setup:** Create a second public GitHub repo (e.g. `wyc-content`) containing `affirmations.json`, `welcomes.json`, and `config.json`. The main app fetches from stable `raw.githubusercontent.com` URLs at runtime. A GitHub Gist is a simpler alternative if a full repo feels like overhead.
 
 ---
 
@@ -80,14 +82,18 @@ wyc/
 │   └── types.ts                # Shared TypeScript interfaces (from PRD schema)
 │
 ├── public/
-│   ├── content/
-│   │   ├── affirmations.json   # Affirmation content pool
-│   │   ├── welcomes.json       # Welcome messages with date ranges
-│   │   └── config.json         # Site config (donation URL, timer, etc.)
-│   ├── audio/                  # Optional self-hosted audio files
-│   ├── images/                 # Optional affirmation images
+│   ├── content/                # LOCAL DEV ONLY — mirrors the external content repo
+│   │   ├── affirmations.json   #   (not deployed; overridden by NEXT_PUBLIC_CONTENT_BASE_URL in prod)
+│   │   ├── welcomes.json
+│   │   └── config.json
+│   ├── images/                 # Optional static images (app chrome, fallbacks)
 │   ├── icons/                  # PWA icons (192x192, 512x512)
 │   └── manifest.json           # Web App Manifest
+│
+│  [external] wyc-content repo  # Separate public GitHub repo — actual live content
+│   ├── affirmations.json       #   raw.githubusercontent.com/.../affirmations.json
+│   ├── welcomes.json
+│   └── config.json             #   audio files referenced by URL in JSON (hosted anywhere)
 │
 └── docs/
     ├── PRD.md
@@ -101,16 +107,20 @@ wyc/
 
 ### Content Loading
 ```
-Build time / page load
-  └─ Browser fetches /content/affirmations.json  (static file, cached by CDN)
-  └─ Browser fetches /content/welcomes.json
-  └─ Browser fetches /content/config.json
+Runtime (client-side, on first render)
+  └─ NEXT_PUBLIC_CONTENT_BASE_URL env var resolves to external content repo base URL
+  └─ Browser fetches {base}/affirmations.json
+  └─ Browser fetches {base}/welcomes.json
+  └─ Browser fetches {base}/config.json
         └─ lib/content.ts parses and validates
+        └─ Falls back to /content/*.json (local dev fallback)
 ```
 
-Content files are plain JSON in `public/` — served as static assets, no server required. The fetch happens client-side on first render. For V0 this is acceptable; the files are tiny and CDN-cached.
+Content lives in a **separate public GitHub repo**. The app fetches from `raw.githubusercontent.com` URLs at runtime on the client. Files are tiny and browser-cached after the first load.
 
-> **Future option:** Move to `getStaticProps`-style imports (import JSON directly at build time) to eliminate the runtime fetch entirely. Held back in V0 to preserve the "edit without redeploy" property.
+Setting `NEXT_PUBLIC_CONTENT_BASE_URL` in Vercel environment variables is the only config needed. Local development falls back to `public/content/` (a local mirror of the content repo, not committed to production).
+
+> **Audio files** are referenced by URL inside the JSON (e.g. `"audioUrl": "https://..."`) — the app never needs to host the audio itself. The creator uploads audio wherever is convenient and pastes the URL into the content file.
 
 ### First Visit Detection
 ```
@@ -257,11 +267,13 @@ git push → Vercel auto-deploy
   └─ Content files in public/ served as-is
 ```
 
-**Content update workflow (no redeploy needed):**
-1. Edit `public/content/affirmations.json` directly on GitHub
-2. Vercel detects the push and redeploys (< 30 seconds for static builds)
+**Content update workflow (zero redeploy):**
+1. Go to the `wyc-content` GitHub repo
+2. Edit `affirmations.json`, `welcomes.json`, or `config.json` directly in the browser
+3. Commit directly to `main`
+4. The main app fetches the updated file on the next user session — no Vercel redeploy needed
 
-> This satisfies FR-05a — "content updatable without code changes." The editor touches only JSON; no TypeScript touched. For truly zero-deploy updates, a future iteration could point content files at a hosted URL (Gist, CDN) checked at runtime.
+The main `wyc` repo is only touched when app code or design changes. Content and code are fully decoupled.
 
 ---
 
@@ -269,7 +281,7 @@ git push → Vercel auto-deploy
 
 | Topic | V0 Decision | Future Path |
 |-------|-------------|-------------|
-| Content source | JSON in repo | Headless CMS (Contentful, Sanity) or Google Sheets API |
+| Content source | JSON in separate public GitHub repo, fetched at runtime | Headless CMS (Contentful, Sanity) or Google Sheets API |
 | Analytics | None | Plausible / Fathom (privacy-first) |
 | Audio hosting | `public/audio/` or external URL | Cloudinary or S3 with signed URLs |
 | Cross-device first-visit | localStorage only | Fingerprint + lightweight backend |
