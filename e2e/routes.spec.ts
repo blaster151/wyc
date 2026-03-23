@@ -11,8 +11,10 @@ test.describe("Route stubs", () => {
     ).toBeVisible();
   });
 
-  test("support page loads", async ({ page }) => {
+  test("support page loads and shows support content", async ({ page }) => {
     await page.goto("/support");
-    await expect(page.getByText(/coming soon/i)).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: /support this project/i })
+    ).toBeVisible();
   });
 });
