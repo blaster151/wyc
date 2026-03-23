@@ -71,4 +71,27 @@ describe("DailyWelcome", () => {
     expect(await screen.findByText("Good morning, friend.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /play audio/i })).not.toBeInTheDocument();
   });
+
+  it("displays fallback message text when no date-matched welcome exists", async () => {
+    const fallback = {
+      id: "fallback",
+      text: "Welcome. Take a moment for yourself.",
+      audioUrl: null,
+      effectiveDateStart: "2000-01-01",
+      effectiveDateEnd: "2099-12-31",
+    };
+    mockedFetchWelcome.mockResolvedValue(fallback);
+    render(<DailyWelcome />);
+    expect(
+      await screen.findByText("Welcome. Take a moment for yourself.")
+    ).toBeInTheDocument();
+  });
+
+  it("stays in loading state if fetchWelcome never resolves", async () => {
+    mockedFetchWelcome.mockReturnValue(new Promise(() => {}));
+    const { container } = render(<DailyWelcome />);
+    expect(container.querySelector(".animate-spin")).toBeInTheDocument();
+    // Begin button should not be present
+    expect(screen.queryByRole("button", { name: /begin/i })).not.toBeInTheDocument();
+  });
 });
