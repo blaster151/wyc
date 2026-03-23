@@ -1,9 +1,12 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import AffirmationFlow from "@/components/AffirmationFlow";
+
 export default function AffirmationsPage() {
+  const router = useRouter();
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#1a1a2e] text-white">
-      <p className="text-lg text-white/60">Affirmation flow coming soon…</p>
-    </div>
+    <AffirmationFlow onComplete={() => router.push("/support")} />
   );
 }
