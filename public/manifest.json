@@ -3,6 +3,7 @@
   "short_name": "WYC",
   "start_url": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "theme_color": "#1a1a2e",
   "background_color": "#1a1a2e",
   "icons": [
